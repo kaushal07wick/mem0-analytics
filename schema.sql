@@ -106,3 +106,27 @@ BEGIN
         UNIQUE (ts_minute, function_name, provider_llm, model_llm, provider_vectorstore);
     END IF;
 END $$;
+
+
+ALTER TABLE mem0_metrics
+ADD COLUMN IF NOT EXISTS insert_count INTEGER,
+ADD COLUMN IF NOT EXISTS memory_hash TEXT,
+ADD COLUMN IF NOT EXISTS estimated_cost_usd DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS ttfr_ms DOUBLE PRECISION;
+
+
+CREATE TABLE IF NOT EXISTS mem0_metrics_chat (
+    LIKE mem0_metrics INCLUDING ALL
+);
+
+CREATE TABLE IF NOT EXISTS mem0_metrics_agent (
+    LIKE mem0_metrics INCLUDING ALL
+);
+
+
+SELECT COUNT(*) FROM mem0_metrics_summary;
+
+ALTER TABLE mem0_metrics_summary_all
+ADD COLUMN IF NOT EXISTS ts_minute TIMESTAMP,
+ADD COLUMN IF NOT EXISTS ts_hour TIMESTAMP,
+ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'chat';

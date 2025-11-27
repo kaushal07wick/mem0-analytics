@@ -1,2 +1,6 @@
 /venc
 .env
+__pycache__/
+chroma_store/
+data/
+qdrant_data/
