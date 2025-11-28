@@ -10,79 +10,97 @@
 
 ---
 
-### 🧩 Overview
+## 🧩 Overview
 
-**Mem0 Analytics** provides **observability, telemetry, and performance analytics** for the [Mem0](https://github.com/mem0ai/mem0) ecosystem — an intelligent memory layer for LLMs.
+**Mem0 Analytics** is the **observability and telemetry layer** for the [Mem0](https://github.com/mem0ai/mem0) ecosystem — designed to measure, understand, and optimize memory systems for LLMs in real time.
 
-It captures **live metrics** from memory operations (`add`, `search`, etc.), aggregates data in **PostgreSQL**, and pushes **real-time KPIs** to **PostHog dashboards**.
-Built for **engineers**, **data scientists**, and **infra teams** optimizing RAG and chat pipelines.
+It captures **low-level metrics** from memory operations (`add`, `search`, etc.), stores them in **PostgreSQL**, and continuously aggregates and pushes **key performance indicators (KPIs)** to **PostHog dashboards** every 60 seconds.
+Engineered for **infra engineers**, **data scientists**, and **AI systems teams** building RAG or agentic pipelines.
 
 ---
 
 ## 🚀 Live Dashboard
 
-![dashboard](./dashboard.png)
+![dashboard](./static/dashboard.png)
 
 🔗 [**View on PostHog →**](https://us.posthog.com/shared/0_gFtZ5fE8WhDNVXKlTHh2i4v31uSQ)
 
-**Tracks:**
+**Monitors:**
 
-* ⚡ Latency (avg & P95) by model and provider
-* 🧠 Embedding, vector, and LLM latency distribution
-* 💾 Cache effectiveness and token efficiency
-* 💰 Cost, token throughput, and reliability index
-* 🧩 CPU & memory utilization per function
+* ⚡ **Latency & Tail Performance** — Average and P95 latency across models
+* 🧠 **Pipeline Breakdown** — Embedding, vector, and LLM stage timing
+* 💾 **Cache Efficiency** — Cache hit ratio and embedding reuse
+* 💰 **Cost & Token Utilization** — Cost-to-latency trade-off metrics
+* 🧩 **System Health** — Error rate, CPU, and memory footprint
 
 ---
 
-**Core Components**
+## ⚙️ Core Components
 
-* `analytics.py` — instruments Mem0 calls, logs metrics to PostgreSQL
-* `daemon.py` — aggregates data, computes KPIs, syncs to PostHog
-* `schema.sql` — defines tables for raw & aggregated metrics
+| File           | Role                                                    |
+| -------------- | ------------------------------------------------------- |
+| `analytics.py` | Instruments Mem0 calls and logs metrics to PostgreSQL   |
+| `daemon.py`    | Aggregates metrics, computes KPIs, and syncs to PostHog |
+| `schema.sql`   | Defines raw and summary metric tables                   |
 
 ---
 
 ## 📊 Metrics Tracked
 
-| Category                 | Metrics                                                       | Description                         |
-| ------------------------ | ------------------------------------------------------------- | ----------------------------------- |
-| **Performance**          | `latency_ms`, `latency_p95`, `ttfr_ms`                        | Total, tail, and cold-start latency |
-| **Tokens & Cost**        | `prompt_tokens`, `completion_tokens`, `estimated_cost_usd`    | Token usage and per-call cost       |
-| **Resource Utilization** | `cpu_percent`, `mem_used_mb`, `disk_read_kb`, `disk_write_kb` | System-level stats                  |
-| **Reliability**          | `error_rate`, `reliability_index`                             | Operational stability               |
-| **Efficiency**           | `cache_hit_ratio`, `token_efficiency`, `vector_contribution`  | Throughput and cache health         |
+| Category             | Metrics                                                       | Description                              |
+| -------------------- | ------------------------------------------------------------- | ---------------------------------------- |
+| **Performance**      | `latency_ms`, `latency_p95`, `ttfr_ms`                        | End-to-end, tail, and cold-start latency |
+| **Tokens & Cost**    | `prompt_tokens`, `completion_tokens`, `estimated_cost_usd`    | Usage and per-call cost                  |
+| **System Resources** | `cpu_percent`, `mem_used_mb`, `disk_read_kb`, `disk_write_kb` | Hardware performance                     |
+| **Reliability**      | `error_rate`, `reliability_index`                             | Service stability and predictability     |
+| **Efficiency**       | `cache_hit_ratio`, `token_efficiency`, `vector_contribution`  | Caching and throughput performance       |
 
 ---
 
-## 📈 Sample Insights (Live)
+## 📈 Live Insights Snapshot
 
-* **🚀 smolm2** is **4.7× faster** than gpt-5-nano
-* **⚠️ gpt-4o-mini** shows **6.9× latency spikes** — circuit breaker recommended
-* **💾 Cache hit rate <1%** — huge optimization opportunity
-* **📊 Vector stores (Qdrant / ChromaDB)** perform <10 ms, no bottleneck
-* **🧠 TTFR <10 ms** — zero cold-start overhead
+* 🚀 **smolm2** is **4.7× faster** than `gpt-5-nano`
+* ⚠️ **gpt-4o-mini** shows **6.9× latency spikes** → add circuit breaker
+* 💾 **Cache hit rate <1%** → major optimization opportunity
+* 🧩 **Vector stores (Qdrant / ChromaDB)** <10 ms latency → not a bottleneck
+* 🧠 **TTFR <10 ms** → no cold-start overhead
+
+---
+
+## 🧱 Architecture
+
+```
+Chat Agent ─┐
+             │→ analytics.py (raw metrics → PostgreSQL)
+Daemon   ────┘
+             ↓
+       PostgreSQL (mem0_metrics_chat)
+             ↓
+     daemon.py → aggregates → PostHog dashboard
+```
+
+> **Postgres acts as the raw telemetry sink; the daemon performs rolling aggregation and pushes summarized KPIs to PostHog every minute.**
 
 ---
 
 ## 🔧 Quick Start
 
 ```bash
-# 1️⃣ Clone repo
+# Clone repo
 git clone https://github.com/mem0ai/mem0-analytics.git
 cd mem0-analytics
 
-# 2️⃣ Configure environment
+# Configure environment
 cp .env.example .env
 # Add PG_DSN, POSTHOG_API_KEY, and other variables
 
-# 3️⃣ Initialize database
+# Initialize database
 psql -U <user> -d mem0_analytics -f schema.sql
 
-# 4️⃣ Run analytics tracker
+# Run analytics tracker
 python analytics.py
 
-# 5️⃣ Start the continuous aggregator
+# Start continuous aggregator
 python daemon.py
 ```
 
@@ -90,76 +108,74 @@ python daemon.py
 
 ## 💻 Example Dashboard Visuals
 
-| Metric                     | Visualization | Insight                          |
-| -------------------------- | ------------- | -------------------------------- |
-| Avg & P95 Latency by Model | Line chart    | Detect tail performance drift    |
-| Pipeline Breakdown         | Stacked bar   | Time in embedding → vector → LLM |
-| Cache Hit Rate (%)         | Area          | Track caching improvements       |
-| Token Usage vs Latency     | Scatter       | Efficiency across models         |
-| CPU & Memory by Function   | Bar           | Resource footprint monitoring    |
+| Metric                 | Visualization | Insight                       |
+| ---------------------- | ------------- | ----------------------------- |
+| Avg vs P95 Latency     | Line chart    | Detect performance drift      |
+| Pipeline Breakdown     | Stacked bar   | Embedding → Vector → LLM time |
+| Cache Hit Rate (%)     | Area          | Measure caching efficiency    |
+| Token Usage vs Latency | Scatter       | Model efficiency comparison   |
+| CPU & Memory           | Bar           | Resource footprint tracking   |
 
 ---
 
 ## 🔬 Engineering Highlights
 
-* Built with **PostgreSQL** + **SQLAlchemy**
+* Built on **PostgreSQL** + **SQLAlchemy**
 * Real-time sync to **PostHog** via batch API
-* Clean modular structure (daemon, analytics, schema)
-* Configurable via `.env`
-* CSV + Parquet data export for offline analysis
-* Fully extensible for **custom metrics**
+* Clean modular structure (analytics + daemon)
+* `.env`-based configuration
+* Exports to CSV for offline analysis
+* Extensible for new metrics, LLMs, and stores
 
 ---
 
-## 🧭 Roadmap & Future Scope
-## 🧩 Integration Roadmap — LLMs & Vector Stores
+## 🧭 Roadmap
 
-### 🔮 Planned LLM Integrations
+### 🔮 Upcoming LLM Integrations
 
-| Provider         | Model / API                        | Status       | Notes                                                      |
-| ---------------- | ---------------------------------- | ------------ | ---------------------------------------------------------- |
-| ✅ **OpenAI**     | `gpt-4o-mini`, `gpt-5-nano`        | ✅ Integrated | Fully instrumented, latency & cost tracked                 |
-| ✅ **Ollama**     | `smollm2`, `smollm2:135m`          | ✅ Integrated | Local inference, cost-free tracking                        |
-| 🔲 **Anthropic** | `claude-3-opus`, `claude-3-sonnet` | ⏳ Planned    | Add API latency & token-level cost                         |
-| 🔲 **Groq**      | `mixtral`, `llama3-groq`           | ⏳ Planned    | Measure sub-10ms ultra-low latency benchmarks              |
-| 🔲 **xAI**       | `Grok-2`                           | ⏳ Planned    | Integrate via REST, track reliability index                |
-| 🔲 **Meta**      | `Llama-3.1`, `Llama-4` (local)     | ⏳ Planned    | Local benchmarking with Ollama + CPU usage metrics         |
-| 🔲 **Google**    | `Gemini-2`                         | ⏳ Planned    | Compare cost-to-performance vs OpenAI                      |
-| 🔲 **DeepSeek**  | `DeepSeek-Coder`, `DeepSeek-Chat`  | ⏳ Planned    | Token-efficient models to benchmark memory cost efficiency |
+* [x] OpenAI – `gpt-4o-mini`, `gpt-5-nano`
+* [x] Ollama – `smollm2`, `smollm2:135m`
+* [ ] Anthropic – `claude-3-opus`, `claude-3-sonnet`
+* [ ] Groq – `mixtral`, `llama3-groq`
+* [ ] xAI – `Grok-2`
+* [ ] Meta – `LLaMA-3.1`, `LLaMA-4`
+* [ ] Google – `Gemini-2`
+* [ ] DeepSeek – `DeepSeek-Coder`, `DeepSeek-Chat`
+
+### 🧠 Upcoming Vector Stores
+
+* [x] Qdrant (Remote)
+* [x] ChromaDB (Local)
+* [ ] Pinecone
+* [ ] Weaviate
+* [ ] Milvus
+* [ ] Redis Vector
+* [ ] LanceDB
+* [ ] FAISS
+
+### 🧰 Infrastructure Extensions
+
+* [ ] Prometheus + Grafana – real-time system metrics
+* [ ] OpenTelemetry – unified tracing for RAG workflows
+* [ ] MinIO / S3 – long-term metric archival
+* [ ] Airflow / Prefect – scheduled aggregation jobs
 
 ---
 
-### 🧠 Planned Vector Store Integrations
+## 🎯 Optimization Priorities
 
-| Vector Store        | Type           | Status       | Notes                                                    |
-| ------------------- | -------------- | ------------ | -------------------------------------------------------- |
-| ✅ **Qdrant**        | Remote (Rust)  | ✅ Integrated | Fastest in production (avg <10ms latency)                |
-| ✅ **ChromaDB**      | Local (Python) | ✅ Integrated | Ideal for lightweight dev workloads                      |
-| 🔲 **Pinecone**     | Cloud          | ⏳ Planned    | Enterprise-grade, multi-tenant metrics                   |
-| 🔲 **Weaviate**     | Cloud/Local    | ⏳ Planned    | Measure hybrid query latency                             |
-| 🔲 **Milvus**       | Local/Cluster  | ⏳ Planned    | Benchmark with high vector throughput                    |
-| 🔲 **Redis Vector** | In-memory      | ⏳ Planned    | Low-latency cache-style retrieval benchmarking           |
-| 🔲 **LanceDB**      | Local          | ⏳ Planned    | Evaluate performance with Arrow-based storage            |
-| 🔲 **FAISS**        | Local          | ⏳ Planned    | Offline RAG experimentation and embedding cache baseline |
+* **Fix cache effectiveness** → 0.7 % → 30 % target → ~30 % latency reduction
+* **Implement cost tracking** → enable cost-based routing
+* **Add circuit breaker for gpt-4o-mini** → prevent latency spikes
+* **Optimize `smollm2` embedding** → reclaim 20 % latency
+* **Monitor P95 latency** → detect tail degradation early
 
 ---
-
-### 🧰 Additional Infrastructure Targets
-
-| Category                           | Tool / Layer                        | Purpose |
-| ---------------------------------- | ----------------------------------- | ------- |
-| 🔲 **Prometheus + Grafana**        | Real-time resource observability    |         |
-| 🔲 **Kubernetes Metrics Exporter** | Track memory, CPU, I/O per Mem0 pod |         |
-| 🔲 **S3 + MinIO Data Lake**        | Long-term metrics archival          |         |
-| 🔲 **Airflow / Prefect**           | Scheduled metric aggregation jobs   |         |
-| 🔲 **OpenTelemetry**               | Unified tracing for RAG workflows   |         |
-
-
 
 ## 🤝 Contributing
 
 Pull requests are welcome!
-If you’d like to add new metrics, providers, or integrations, open an issue or start a discussion.
+Add new metrics, providers, or visualizations.
 
 ```bash
 git checkout -b feature/add-groq-support
@@ -167,9 +183,17 @@ git commit -am "Add Groq inference metrics"
 git push origin feature/add-groq-support
 ```
 
+---
+
 ## 📜 License
 
 Released under the **MIT License**.
 See [`LICENSE`](./LICENSE) for details.
 
+---
 
+## 👤 Author
+
+**Kaushal**
+📬 Built independently to demonstrate real-time observability for Mem0’s intelligent memory infrastructure.
+Focused on making AI systems measurable, efficient, and reliable.

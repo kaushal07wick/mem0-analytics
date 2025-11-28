@@ -1,0 +1,81 @@
+version: "3.9"
+
+services:
+  # 🧩 PostgreSQL — metrics store
+  postgres:
+    image: postgres:16-alpine
+    container_name: mem0-postgres
+    environment:
+      POSTGRES_USER: mem0
+      POSTGRES_PASSWORD: mem0
+      POSTGRES_DB: mem0_analytics
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mem0"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 🧠 Qdrant — production-grade vector store
+  qdrant:
+    image: qdrant/qdrant:v1.12.0
+    container_name: mem0-qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  # 💾 ChromaDB — lightweight local vector store
+  chromadb:
+    image: ghcr.io/chroma-core/chroma:latest
+    container_name: mem0-chromadb
+    ports:
+      - "8000:8000"
+    environment:
+      IS_PERSISTENT: "TRUE"
+      ANONYMIZED_TELEMETRY: "FALSE"
+    volumes:
+      - chroma_data:/chroma
+
+  # 📊 Mem0 Analytics Daemon
+  mem0-daemon:
+    build: .
+    container_name: mem0-daemon
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+      chromadb:
+        condition: service_started
+    environment:
+      PG_DSN: postgresql://mem0:mem0@postgres:5432/mem0_analytics
+      POSTHOG_API_KEY: ${POSTHOG_API_KEY:-phc_xxxxxx}
+      POSTHOG_URL: https://app.posthog.com
+      METRICS_TARGET: chat
+      COST_LAT_WEIGHT: 0.5
+      DATA_DIR: /data
+    volumes:
+      - ./data:/data
+    command: ["python", "-m", "analytics.daemon"]
+
+  # 🧭 PgAdmin — optional GUI
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: mem0-pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@mem0.ai
+      PGADMIN_DEFAULT_PASSWORD: admin
+    depends_on:
+      - postgres
+
+volumes:
+  pg_data:
+  qdrant_data:
+  chroma_data:
