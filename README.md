@@ -21,7 +21,9 @@ Built for **engineers**, **data scientists**, and **infra teams** optimizing RAG
 
 ## 🚀 Live Dashboard
 
-🔗 [**View Real-Time Mem0 Dashboard on PostHog →**](https://us.posthog.com/shared/0_gFtZ5fE8WhDNVXKlTHh2i4v31uSQ)
+![dashboard](./dashboard.png)
+
+🔗 [**View on PostHog →**](https://us.posthog.com/shared/0_gFtZ5fE8WhDNVXKlTHh2i4v31uSQ)
 
 **Tracks:**
 
@@ -32,16 +34,6 @@ Built for **engineers**, **data scientists**, and **infra teams** optimizing RAG
 * 🧩 CPU & memory utilization per function
 
 ---
-
-## ⚙️ Architecture
-
-```mermaid
-graph TD
-    A[Mem0 Chat / Agent Apps] -->|Analytics wrapper| B[(PostgreSQL)]
-    B -->|Aggregates per minute| C[Daemon (Aggregator)]
-    C -->|Push batch metrics| D[PostHog Dashboard]
-    D --> E[Insights / Alerts / Visuals]
-```
 
 **Core Components**
 
