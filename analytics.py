@@ -11,24 +11,17 @@ from mem0 import Memory
 
 load_dotenv()
 
-PG_DSN = os.getenv("PG_DSN", "postgresql://postgres:postgres@localhost:5432/postgres")
+PG_DSN = os.getenv("PG_DSN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
-# Target table switch: 'chat' or 'agent'
 METRICS_TARGET = os.getenv("METRICS_TARGET", "chat").lower()
-
-# Token cost (for estimated_cost_usd)
 COST_RATE_PROMPT = float(os.getenv("COST_RATE_PROMPT_USD", 0))
 COST_RATE_COMPLETION = float(os.getenv("COST_RATE_COMPLETION_USD", 0))
 
 
 def get_table_name() -> str:
-    if METRICS_TARGET == "agent":
-        return "mem0_metrics_agent"
-    return "mem0_metrics_chat"
+    return "mem0_metrics_agent" if METRICS_TARGET == "agent" else "mem0_metrics_chat"
 
 
-# ----------------- DB -----------------
 @contextmanager
 def pg_conn():
     conn = psycopg2.connect(PG_DSN)
@@ -62,13 +55,17 @@ def insert_metric(row: dict):
         %(insert_count)s, %(memory_hash)s, %(estimated_cost_usd)s, %(ttfr_ms)s
     );
     """
-    with pg_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(sql, row)
-        conn.commit()
+    try:
+        with pg_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, row)
+            conn.commit()
+    except psycopg2.Error as e:
+        print(f"[analytics] DB insert failed: {e.pgerror or e}")
+    except Exception as e:
+        print(f"[analytics] Unexpected DB error: {e}")
 
 
-# ----------------- HELPERS -----------------
 def _name(obj):
     try:
         return obj.__class__.__name__
@@ -153,7 +150,6 @@ def update_cache_metrics(fn_name, query, result):
     return _cache_hits[key] / _cache_total[key]
 
 
-# ----------------- WRAPS -----------------
 def wrap_embedder(embedder):
     if not embedder or not hasattr(embedder, "embed"):
         return embedder
@@ -237,7 +233,6 @@ def wrap_llm(llm):
     return llm
 
 
-# ----------------- MAIN TRACK DECORATOR -----------------
 def track(memory: Memory, fn_name: str):
     orig = getattr(memory, fn_name)
 
@@ -247,7 +242,7 @@ def track(memory: Memory, fn_name: str):
         wrap_vectorstore(memory.vector_store)
         wrap_llm(memory.llm)
 
-        process = psutil.Process(os.getpid())
+        process = psutil.Process()
         io_before = process.io_counters()
         mem_before = process.memory_info().rss / (1024 * 1024)
         t0 = time.time()
@@ -262,7 +257,7 @@ def track(memory: Memory, fn_name: str):
             duration = (time.time() - t0) * 1000.0
             io_after = process.io_counters()
             mem_after = process.memory_info().rss / (1024 * 1024)
-            cpu_percent = process.cpu_percent(interval=0.05)
+            cpu_percent = process.cpu_percent(interval=None)
             disk_read_kb = (io_after.read_bytes - io_before.read_bytes) / 1024.0
             disk_write_kb = (io_after.write_bytes - io_before.write_bytes) / 1024.0
             mem_used_mb = max(0.0, mem_after - mem_before)
@@ -319,7 +314,6 @@ def track(memory: Memory, fn_name: str):
                 "estimated_cost_usd": estimated_cost,
                 "ttfr_ms": ttfr_ms,
             })
-
             return out
 
         except Exception as e:
@@ -330,26 +324,6 @@ def track(memory: Memory, fn_name: str):
                 "success": False,
                 "error_message": str(e)[:1000],
                 **meta,
-                "cpu_percent": None,
-                "mem_used_mb": None,
-                "disk_read_kb": None,
-                "disk_write_kb": None,
-                "output_size": None,
-                "prompt_tokens": None,
-                "completion_tokens": None,
-                "total_tokens": None,
-                "embed_batch_size": None,
-                "embed_latency_ms": None,
-                "vector_backend": None,
-                "vector_latency_ms": None,
-                "cache_hit_ratio": None,
-                "user_id": user_id,
-                "agent_id": agent_id,
-                "run_id": run_id,
-                "insert_count": None,
-                "memory_hash": None,
-                "estimated_cost_usd": None,
-                "ttfr_ms": None,
             })
             raise
 
