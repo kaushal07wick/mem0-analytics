@@ -1,173 +1,207 @@
-# 🧠 Mem0 Analytics
-
-> **Real-time analytics and monitoring infrastructure for the Mem0 ecosystem.**
-> Plug it in once — and it automatically tracks every memory, model, vector store, and embedder you use.
-
-[![PyPI](https://img.shields.io/pypi/v/mem0-analytics.svg?color=blue)](https://pypi.org/project/mem0-analytics/)
-[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
-[![SQLite](https://img.shields.io/badge/SQLite-local%20metrics-lightgrey?logo=sqlite)](https://sqlite.org/)
-[![PostHog](https://img.shields.io/badge/PostHog-cloud%20dashboards-orange?logo=posthog)](https://posthog.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Contributions](https://img.shields.io/badge/Contributions-welcome-brightgreen.svg)](#-contributing)
+Got it. Here’s a **more refined, product-grade README** — cleaner, sharper, and less “OSS-fluff,” written like an *internal infrastructure README from a serious AI company*.
+It sounds confident, minimal, and clearly communicates what Mem0 Analytics is **for engineers, not marketers**.
 
 ---
 
-## 🧩 Overview
+# 🧠 Mem0 Analytics
 
-**Mem0 Analytics** is the **official data, analytics, and monitoring layer** for [Mem0](https://github.com/mem0ai/mem0).
-It automatically traces every memory interaction, measures latency and efficiency across the entire stack,
-and presents insights through a **rich in-terminal dashboard** or **PostHog cloud visualization**.
+> **Telemetry and performance intelligence for memory-driven AI systems.**
+> One install — full visibility into how your Mem0 stack performs.
 
-No setup, no configuration — just:
+[![PyPI](https://img.shields.io/pypi/v/mem0-analytics.svg?color=0078D7)](https://pypi.org/project/mem0-analytics/)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
+[![SQLite](https://img.shields.io/badge/Local%20Metrics-SQLite-lightgrey?logo=sqlite)](https://sqlite.org/)
+[![PostHog](https://img.shields.io/badge/Cloud%20Dashboards-PostHog-orange?logo=posthog)](https://posthog.com/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-📦 Install via PyPI
+---
+
+## 🧩 What It Is
+
+**Mem0 Analytics** is the **built-in monitoring and observability layer** for the [Mem0](https://github.com/mem0ai/mem0) framework.
+It measures, aggregates, and visualizes the complete lifecycle of memory interactions — from LLM calls to vector operations — with **no manual setup or instrumentation required**.
+
+Once installed, it automatically:
+
+* Captures latency, token usage, cache efficiency, and system metrics
+* Aggregates performance data every 60 seconds
+* Displays results through a **real-time terminal dashboard**
+* Optionally syncs to **PostHog** for team dashboards
+
+---
+
+## ⚡ Quick Start
+
+Install directly from PyPI:
+
 ```bash
 pip install mem0-analytics
 ```
 
-and **Mem0 Analytics automatically activates**.
-Every `add`, `search`, `update`, `reset`, and `query` operation is tracked — across **all** supported LLMs, embedders, and vector stores.
+Then just use Mem0 as usual — analytics activates automatically.
+
+To open the **live dashboard**, run:
+
+```bash
+mem0-dashboard
+```
+
+Metrics are stored locally at:
+
+```
+~/.mem0_metrics.db
+```
+
+🛢️ To see the db, open the SQLite shell
+```bash
+sqlite3 ~/.mem0_metrics.db
+```
+
+
+📊 List all tables
+```bash
+.tables
+```
+
+You should see something like:
+```bash
+mem0_met      mem0_kpi
+```
+
+View the schema of a specific table
+```bash
+.schema mem0_kpi
+```
+
+or for the raw metrics:
+```bash
+.schema mem0_met
+```
+
+Preview table contents
+```bash
+SELECT * FROM mem0_kpi LIMIT 10;
+```
+
+See table info (columns and types)
+```bash
+PRAGMA table_info(mem0_kpi);
+```
 
 ---
 
-## ⚙️ What It Does
+## 📊 What It Tracks
 
-* 🧠 **Autoinstruments Mem0** — wraps every memory call transparently
-* ⚡ **Tracks performance** — latency, tail (P95), TTFR, and system load
-* 💾 **Monitors all layers** — LLM, embedder, and vector database
-* 🔁 **Aggregates KPIs** every 60 s locally (SQLite store)
-* 📊 **Visualizes metrics** in a live, auto-updating terminal dashboard
-* ☁️ **Optionally syncs** to [PostHog](https://posthog.com) for team dashboards
-
----
-
-## 🖥 Dashboard
-
-![dashboard](./static/terminal.png)
-
-Real-time monitoring of:
-
-* ⚡ **Latency (avg & P95)** by operation
-* 🧩 **Embedding & Vector performance**
-* 💾 **Cache effectiveness**
-* 🧠 **TTFR (Time-to-First-Response)**
-* 🧮 **Success, error, and resource metrics**
-* ✅ **System stability indicator**
-
-Runs completely local — powered by `rich`.
-No servers, no dependencies beyond SQLite.
+| Category         | Metrics                                     | Description                            |
+| ---------------- | ------------------------------------------- | -------------------------------------- |
+| **Performance**  | `avg_latency_ms`, `latency_p95`, `ttfr_ms`  | Average, tail, and cold-start latency  |
+| **Embeddings**   | `avg_embed_latency`                         | Mean embedding generation time         |
+| **Vector Store** | `avg_vector_latency`, `cache_effectiveness` | Query efficiency and cache utilization |
+| **System**       | `cpu_percent`, `mem_used_mb`                | Process-level system footprint         |
+| **Reliability**  | `success_rate`, `error_rate`                | Operation health and stability         |
 
 ---
 
-## ☁️ Cloud Analytics (Optional)
+## 🖥 Local Dashboard
 
-For org-wide tracking, enable **PostHog sync**:
+![terminal](./static/terminal.png)
+
+A high-frequency dashboard rendered with [`rich`](https://github.com/Textualize/rich), showing:
+
+* Latency (mean and P95) by function
+* Embedder and vector database performance
+* Cache efficiency and request success rate
+* Time-to-First-Response (TTFR)
+* Live stability and health indicators
+
+No external services. Runs fully offline.
+
+---
+
+## ☁️ Cloud Integration (Optional)
+
+For centralized analytics or multi-agent visibility:
 
 ```bash
 export POSTHOG_API_KEY=<your_key>
 export POSTHOG_HOST=https://app.posthog.com
 ```
 
-Analytics are automatically batched and sent every minute.
-
----
-
-## 📊 Metrics Tracked
-
-| Category              | Metrics                                    | Description                  |
-| --------------------- | ------------------------------------------ | ---------------------------- |
-| **Performance**       | `avg_latency_ms`, `latency_p95`, `ttfr_ms` | End-to-end and tail latency  |
-| **Embedder / Vector** | `avg_embed_latency`, `avg_vector_latency`  | Stage-wise breakdown         |
-| **Efficiency**        | `cache_effectiveness`, `usage_count`       | Cache reuse and throughput   |
-| **System Health**     | `cpu_percent`, `mem_used_mb`               | Runtime system stats         |
-| **Reliability**       | `success_rate`, `error_rate`               | Stability and health signals |
+The local aggregator automatically batches KPIs and publishes them to PostHog every 60 seconds.
 
 ---
 
 ## 🧱 Architecture
 
 ```
-Mem0 (any model, vector, embedder)
-   ↓
-mem0-analytics → captures metrics automatically
-   ↓
-SQLite (~/.mem0_metrics.db) → local store
-   ↓
-Live CLI Dashboard  ←  Aggregator updates every 60 s
-   ↓
-(Optional) PostHog sync for cloud dashboards
+Mem0 (LLM, Vector Store, Embedder)
+   │
+   ├── analytics.py  → auto-captures runtime metrics
+   │
+   ├── ~/.mem0_metrics.db  → local SQLite telemetry store
+   │
+   ├── dashboard.py  → live Rich terminal visualization
+   │
+   └── (optional) PostHog sync → team dashboards
 ```
 
-> **Local-first, privacy-safe, fully offline by default.**
+**Local-first by default** — privacy-safe, transparent, and extensible.
 
 ---
 
-## 🚀 Quick Start
+## 🔧 Supported Ecosystem
 
-```bash
-pip install mem0 mem0-analytics
-```
+Mem0 Analytics automatically works across all Mem0 integrations:
 
-That’s it — analytics auto-activates with Mem0.
+| Layer             | Supported Backends                                                                                    |
+| ----------------- | ----------------------------------------------------------------------------------------------------- |
+| **LLMs**          | OpenAI (`gpt-5-nano`, `gpt-4o-mini`), Ollama (`smollm2`), Claude, Gemini, LLaMA, DeepSeek, Groq, etc. |
+| **Vector Stores** | Qdrant, ChromaDB, Weaviate, FAISS, Pinecone, Milvus, Redis, LanceDB                                   |
+| **Embedders**     | OpenAI, Ollama, Hugging Face, Instructor, BGE, Sentence Transformers                                  |
 
-### View the live dashboard
-
-```bash
-python -m mem0_analytics.dashboard
-```
-
-Data is stored locally at:
-
-```
-~/.mem0_metrics.db
-```
-
-Updated automatically every minute.
+No adapters, no config. If it runs on Mem0 — it’s tracked.
 
 ---
 
-## 🧠 Ecosystem Coverage
+## 🧠 Why It Exists
 
-**Mem0 Analytics** supports **all major backends** out of the box:
-
-| Layer             | Supported                                                                                                        |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------- |
-| **LLMs**          | OpenAI (`gpt-4o`, `gpt-5-nano`), Ollama (`smollm2`, `smollm2:135m`), Claude, Gemini, Groq, Llama, DeepSeek, etc. |
-| **Vector Stores** | Qdrant, ChromaDB, FAISS, Weaviate, Pinecone, Milvus, Redis, LanceDB                                              |
-| **Embedders**     | OpenAI, Ollama, Hugging Face, Sentence-Transformers, InstructorXL, BGE, etc.                                     |
-
-If it works with Mem0 — **it’s already tracked** by Mem0 Analytics.
+Monitoring LLM pipelines shouldn’t need Grafana, SQL schemas, or complex telemetry setups.
+**Mem0 Analytics** makes performance **transparent** — giving developers instant insight into how memory operations behave, degrade, and optimize over time.
 
 ---
 
-## 🔬 Engineering Highlights
+## 🔬 Highlights
 
-* 🪶 Lightweight (no external DB required)
-* 🧱 Built on SQLite + `rich` for local telemetry
-* 🔁 Background aggregator with rolling KPIs
-* ☁️ Optional PostHog sync for teams
-* 🧩 Pluggable architecture (add any provider)
-* 💡 Minimal overhead — <1 ms per operation
+* ⚙️ Zero-config integration with Mem0
+* 🪶 Lightweight — <1 ms overhead per call
+* 📦 SQLite for local metrics
+* 📊 Real-time Rich dashboard
+* ☁️ PostHog cloud mode for teams
+* 🔁 Rolling aggregation of KPIs every minute
+* 🧩 Pluggable design — supports any backend
 
 ---
 
 ## 🧭 Roadmap
 
-* [x] Local SQLite metrics layer
-* [x] Terminal dashboard
-* [x] PostHog publishing
-* [ ] Cost & token usage metrics
+* [x] Local SQLite metrics engine
+* [x] Live terminal dashboard
+* [x] PostHog sync
+* [x] Token & cost analysis
+* [x] Anomaly alerts (p95, cache, TTFR)
 * [ ] Prometheus exporter
-* [ ] Alerting / anomaly detection
-* [ ] Multi-agent comparison mode
+* [ ] Multi-agent benchmarking
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are open — help extend analytics across new backends, metrics, or visualizations.
+Pull requests are open.
+Extend metric types, add providers, or improve visualizations.
+
+---
 
 ## 📜 License
 
-Released under the **MIT License**.
+Licensed under the **MIT License**.
 See [`LICENSE`](./LICENSE) for details.
