@@ -1,7 +1,7 @@
 MIT License
 
-Copyright (c) 2025 Mem0.ai Contributors and the Open Source Community
-(https://github.com/mem0ai/mem0-analytics)
+Copyright (c) 2025 Mem0.ai and Open Source Contributors
+https://github.com/mem0ai/mem0-analytics
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

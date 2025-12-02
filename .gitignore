@@ -6,3 +6,5 @@ data/
 qdrant_data/
 src/mem0_analytics/fake_data.py
 src/mem0_analytics/data
+/dist
+src/mem0_analytics.egg-info/
