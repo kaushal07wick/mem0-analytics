@@ -1,0 +1,4 @@
+[console_scripts]
+mem0-aggregate = mem0_analytics.aggregate:run_continuous
+mem0-analytics-track = mem0_analytics.analytics:_autopatch
+mem0-dashboard = mem0_analytics.dashboard:run_dashboard
