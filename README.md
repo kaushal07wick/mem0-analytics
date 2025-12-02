@@ -1,8 +1,3 @@
-Got it. Here’s a **more refined, product-grade README** — cleaner, sharper, and less “OSS-fluff,” written like an *internal infrastructure README from a serious AI company*.
-It sounds confident, minimal, and clearly communicates what Mem0 Analytics is **for engineers, not marketers**.
-
----
-
 # 🧠 Mem0 Analytics
 
 > **Telemetry and performance intelligence for memory-driven AI systems.**
